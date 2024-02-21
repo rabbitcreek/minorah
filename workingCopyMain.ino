@@ -32,9 +32,8 @@ void setup() {
 
      print_wakeup_reason();
 //pinMode(GPIO_NUM_4, INPUT_PULLUP);
-if(primeIndex == 0)dater();
-if( primeDay == 0)startDay();
-if( primeIndex != 0 && primeDay != 0 )startHoliday();
+if(primeIndex == 0)firstDater();
+if(primeIndex != 0 && primeDay != 0 )startHoliday();
 
 //    if(rtc.lostPower()) {
 //        // this will adjust to the date and time at compilation
@@ -64,7 +63,7 @@ if( primeIndex != 0 && primeDay != 0 )startHoliday();
     rtc.disableAlarm(2);
     
     // schedule an Alarm for a certain date (day of month), hour, minute, and second
-    DateTime alarmTime (2021, 2, 17, 18, 59, 0);
+    //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
     Serial.print("Current time: ");
      if(!(rtc.setAlarm1(alarmTime, DS3231_A1_Date)) ) {
         Serial.println("Error, alarm wasn't set!");
@@ -121,25 +120,27 @@ void print_wakeup_reason()
     default : Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
   }
 }
-void dater(){
+void firstDater(){ //this function finds the index in holiday for matching year if primeIndex is 0...like the first time
 DateTime current = rtc.now();
 for (int i = 0; i < 11; i++){
  if( holiday[i,2] == current.year(){
-  primeIndex = i
+  primeIndex = i;
   break;
  }
+ if(primeIndex = 0) Serial.println( "cannot find primeIndex");
 }
+if(current.day() == holiday[primeIndex, 1] && current.month() == holiday[primeIndex , 0])primeDay = 1;
+else Serial.println(" cannot find primeDay ")
 }
-void startDay(){
-  DateTime current = rtc.now();
-  if(current.year() == holiday[primeIndex,2]&&  current.day() == holiday[primeIndex, 1] && current.month() == holiday[primeIndex , 0])primeDay = 1;
+
+  
 
 }
 void startHoliday(){
-  int candleHold = 5000;
-  int candleTimer = 10 * 1000 * 60;
-  double timeTracker = millis();
-  for ( int x = 0; x <= primeDay; x++){
+  int candleHold = 5000;    // delay in between lighting next candle
+  int candleTimer = 10 * 1000 * 60;   //ten minutes that candles will be on
+  double timeTracker = millis();  //this is baseline timing for when candles will be lit
+  for ( int x = 0; x <= primeDay; x++){   //this  segment turns candles on
     for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
     
     float angle = radians(i);                             // Converts degrees to radians.
@@ -147,12 +148,12 @@ void startHoliday(){
     aw.analogWrite(x,brightness);                          // Sends sine wave information to pin 9.
     delay(30);                                            // Delay between each point of sine wave.
   }
-  delay(candleHold);
+  delay(candleHold);  //delay in between candles
   }
-   while ( millis() - timeTracker <= candleTimer){
+   while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
     int xo = xo + 1; 
    }
-   for ( int x = primeDay; x >= 0; x--){
+   for ( int x = primeDay; x >= 0; x--){ //primeDay is number of days of the 8 in sequence ...this turns candles off
    for (int i = 0; i < 270; i++){                          // 360 degrees of an imaginary circle.
     
     float angle = radians(i);                             // Converts degrees to radians.
@@ -162,4 +163,43 @@ void startHoliday(){
    }
   
 }
+primeDay ++;
+if(primeDay == 9) seeUNxtYr();
+DateTime celebrate = rtc.now() + TimeSpan(1,0,0,0);
+goToSleep(celebrate);
+
+
+}
+void goToSleep(DateTime sleepy){
+  rtc.clearAlarm(1);
+  rtc.clearAlarm(2);
+// stop oscillating signals at SQW Pin
+    // otherwise setAlarm1 will fail
+    rtc.writeSqwPinMode(DS3231_OFF);
+    
+    // turn off alarm 2 (in case it isn't off already)
+    // again, this isn't done at reboot, so a previously set alarm could easily go overlooked
+    rtc.disableAlarm(2);
+     // schedule an Alarm for a certain date (day of month), hour, minute, and second
+    //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
+    Serial.print("Current time: ");
+     if(!(rtc.setAlarm1(sleepy, DS3231_A1_Date)) ) {
+        Serial.println("Error, alarm wasn't set!");
+    }else {
+        Serial.println("Alarm will happen in 10 seconds!");  
+    }
+    Serial.println("Going to sleep now");
+        Serial.flush();
+        esp_deep_sleep_start();
+        Serial.println("This will never be printed");
+
+}
+void seeUNxtYr(){
+primeIndex ++;
+int p = primeIndex;
+if(p >= 10)break;
+//DateTime alarmTime (2021, 2, 17, 18, 59, 0);
+DateTime future (holiday[p,2],holiday[p, 0], holiday[p, 1],19, 0,0);
+if(rtc.year() +1 != holiday[p,2]) Serial.println("Next year schedule is broken");
+goToSleep(future);
 }
