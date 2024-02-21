@@ -22,7 +22,7 @@ void setup() {
     aw.pinMode(zip, AW9523_LED_MODE);
     aw.analogWrite(zip, 0);
   }
-  bootCount = bootCount * -1;
+  
 
     if(!rtc.begin()) {
         Serial.println("Couldn't find RTC!");
@@ -31,6 +31,12 @@ void setup() {
     }
 
      print_wakeup_reason();
+     if(rtc.alarmFired(1)) {
+            Serial.println("Alarm occured, current time: ");
+            printTime();
+            rtc.clearAlarm(1);
+            Serial.println("Alarm 1 cleared");
+        }
 //pinMode(GPIO_NUM_4, INPUT_PULLUP);
 if(primeIndex == 0)firstDater();
 if(primeIndex != 0 && primeDay != 0 )startHoliday();
@@ -48,49 +54,11 @@ if(primeIndex != 0 && primeDay != 0 )startHoliday();
     gpio_hold_en(GPIO_NUM_4);
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0); //1 = High, 0 = Low
     //attachInterrupt(digitalPinToInterrupt(GPIO_NUM_4), onAlarm, FALLING);
-    
-    // set alarm 1, 2 flag to false (so alarm 1, 2 didn't happen so far)
-    // if not done, this easily leads to problems, as both register aren't reset on reboot/recompile
-    rtc.clearAlarm(1);
-    rtc.clearAlarm(2);
-    
-    // stop oscillating signals at SQW Pin
-    // otherwise setAlarm1 will fail
-    rtc.writeSqwPinMode(DS3231_OFF);
-    
-    // turn off alarm 2 (in case it isn't off already)
-    // again, this isn't done at reboot, so a previously set alarm could easily go overlooked
-    rtc.disableAlarm(2);
-    
-    // schedule an Alarm for a certain date (day of month), hour, minute, and second
-    //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
-    Serial.print("Current time: ");
-     if(!(rtc.setAlarm1(alarmTime, DS3231_A1_Date)) ) {
-        Serial.println("Error, alarm wasn't set!");
-    }else {
-        Serial.println("Alarm will happen in 10 seconds!");  
-    }
-    
-    //printTime();
-    //Serial.println();
-    if(!bootCount){
-    Serial.println("Going to sleep now");
-        Serial.flush();
-        esp_deep_sleep_start();
-        Serial.println("This will never be printed");
-  }
-    
+  
 }
 void loop() {
   
-    if(bootCount){
-        if(rtc.alarmFired(1)) {
-            Serial.println("Alarm occured, current time: ");
-            printTime();
-            rtc.clearAlarm(1);
-            Serial.println("Alarm 1 cleared");
-        }
-    }
+  
 }
 void printTime(){
      
@@ -122,12 +90,12 @@ void print_wakeup_reason()
 }
 void firstDater(){ //this function finds the index in holiday for matching year if primeIndex is 0...like the first time
 DateTime current = rtc.now();
-for (int i = 0; i < 11; i++){
- if( holiday[i,2] == current.year(){
-  primeIndex = i;
+for (int i = 0; i < 11; i++){ //goes through holiday index of years looking for this year...last year included so primeIndex will not equal 0..
+ if( holiday[i,2] == current.year(){ //checks to  see if its this year..
+  primeIndex = i;//sets primeIndex to current year data
   break;
  }
- if(primeIndex = 0) Serial.println( "cannot find primeIndex");
+ if(primeIndex = 0) Serial.println( "cannot find primeIndex");//if primeIndex is still zero after search something is wrong
 }
 if(current.day() == holiday[primeIndex, 1] && current.month() == holiday[primeIndex , 0])primeDay = 1;
 else Serial.println(" cannot find primeDay ")
@@ -163,10 +131,10 @@ void startHoliday(){
    }
   
 }
-primeDay ++;
-if(primeDay == 9) seeUNxtYr();
-DateTime celebrate = rtc.now() + TimeSpan(1,0,0,0);
-goToSleep(celebrate);
+primeDay ++; //added another day to festivities
+if(primeDay == 9) seeUNxtYr(); //if over 8 days schedule next year
+DateTime celebrate = rtc.now() + TimeSpan(1,0,0,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
+goToSleep(celebrate); //goes to sleep with wakup on correct date/hour/min/seconds match
 
 
 }
@@ -183,23 +151,23 @@ void goToSleep(DateTime sleepy){
      // schedule an Alarm for a certain date (day of month), hour, minute, and second
     //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
     Serial.print("Current time: ");
-     if(!(rtc.setAlarm1(sleepy, DS3231_A1_Date)) ) {
+     if(!(rtc.setAlarm1(sleepy, DS3231_A1_Date)) ) { //DS3231 Date alarm rings when date, hour, minute, sec match
         Serial.println("Error, alarm wasn't set!");
     }else {
         Serial.println("Alarm will happen in 10 seconds!");  
     }
     Serial.println("Going to sleep now");
         Serial.flush();
-        esp_deep_sleep_start();
+        esp_deep_sleep_start(); //starts deep sleep
         Serial.println("This will never be printed");
 
 }
 void seeUNxtYr(){
-primeIndex ++;
+primeIndex ++;  //going for next year on list
 int p = primeIndex;
-if(p >= 10)break;
+if(p >= 10)break; //over ten years ... hopefully I will still be alive
 //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
-DateTime future (holiday[p,2],holiday[p, 0], holiday[p, 1],19, 0,0);
-if(rtc.year() +1 != holiday[p,2]) Serial.println("Next year schedule is broken");
-goToSleep(future);
+DateTime future (holiday[p,2],holiday[p, 0], holiday[p, 1],19, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
+if(rtc.year() +1 != holiday[p,2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
+goToSleep(future); //send future to sleep function...
 }
