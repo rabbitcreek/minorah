@@ -3,10 +3,10 @@
 RTC_DS3231 rtc;
 // the pin that is connected to SQW
 #define CLOCK_INTERRUPT_PIN 4
-RTC_DATA_ATTR int bootCount = 1;
+
 RTC_DATA_ATTR int primeIndex = 0;
 RTC_DATA_ATTR int primeDay = 0;
-const int holiday[11][3] = {{12,12,2023},{12,25,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
+ int holiday[11][3] = {{12,12,2023},{2,23,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
 {11,27,2032},{12,16,2033}};
 #include <Adafruit_AW9523.h>
 Adafruit_AW9523 aw;
@@ -31,6 +31,13 @@ void setup() {
     }
 
      print_wakeup_reason();
+     rtc.disable32K();
+    
+    // Making it so, that the alarm will trigger an interrupt
+    pinMode(GPIO_NUM_4, INPUT_PULLUP);
+    gpio_hold_en(GPIO_NUM_4);
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0); //1 = High, 0 = Low
+    //attachInterrupt(digitalPinToInterrupt(GPIO_NUM_4), onAlarm, FALLING);
      if(rtc.alarmFired(1)) {
             Serial.println("Alarm occured, current time: ");
             printTime();
@@ -46,14 +53,8 @@ if(primeIndex != 0 && primeDay != 0 )startHoliday();
 //        rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 //    }
     
-    //we don't need the 32K Pin, so disable it
-    rtc.disable32K();
+   
     
-    // Making it so, that the alarm will trigger an interrupt
-    pinMode(GPIO_NUM_4, INPUT_PULLUP);
-    gpio_hold_en(GPIO_NUM_4);
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0); //1 = High, 0 = Low
-    //attachInterrupt(digitalPinToInterrupt(GPIO_NUM_4), onAlarm, FALLING);
   
 }
 void loop() {
@@ -69,10 +70,7 @@ void printTime(){
     rtc.now().toString(time);
     Serial.println(time);
 }
-void onAlarm() {
-    bootCount = true;
-    bingo = true;
-}
+
 void print_wakeup_reason()
 {
   esp_sleep_wakeup_cause_t wakeup_reason;
@@ -89,24 +87,24 @@ void print_wakeup_reason()
   }
 }
 void firstDater(){ //this function finds the index in holiday for matching year if primeIndex is 0...like the first time
-DateTime current = rtc.now();
+DateTime cal = rtc.now();
 for (int i = 0; i < 11; i++){ //goes through holiday index of years looking for this year...last year included so primeIndex will not equal 0..
- if( holiday[i,2] == current.year(){ //checks to  see if its this year..
+ if(  holiday[i][2] == cal.year()){ //checks to  see if its this year..
   primeIndex = i;//sets primeIndex to current year data
   break;
  }
  if(primeIndex = 0) Serial.println( "cannot find primeIndex");//if primeIndex is still zero after search something is wrong
 }
-if(current.day() == holiday[primeIndex, 1] && current.month() == holiday[primeIndex , 0])primeDay = 1;
-else Serial.println(" cannot find primeDay ")
+if(cal.day() == holiday[primeIndex][1] && cal.month() == holiday[primeIndex ][0])primeDay = 1;
+else Serial.println(" cannot find primeDay ");
 }
 
   
 
-}
+
 void startHoliday(){
   int candleHold = 5000;    // delay in between lighting next candle
-  int candleTimer = 10 * 1000 * 60;   //ten minutes that candles will be on
+  int candleTimer = 1 * 1000 * 60;   //ten minutes that candles will be on
   double timeTracker = millis();  //this is baseline timing for when candles will be lit
   for ( int x = 0; x <= primeDay; x++){   //this  segment turns candles on
     for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
@@ -133,12 +131,14 @@ void startHoliday(){
 }
 primeDay ++; //added another day to festivities
 if(primeDay == 9) seeUNxtYr(); //if over 8 days schedule next year
-DateTime celebrate = rtc.now() + TimeSpan(1,0,0,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
-goToSleep(celebrate); //goes to sleep with wakup on correct date/hour/min/seconds match
+DateTime celebrate = rtc.now() + TimeSpan(0,0,5,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
+goToSleepDate(celebrate); //goes to sleep with wakup on correct date/hour/min/seconds match
 
 
 }
-void goToSleep(DateTime sleepy){
+
+
+void goToSleepDate(DateTime sleepy){
   rtc.clearAlarm(1);
   rtc.clearAlarm(2);
 // stop oscillating signals at SQW Pin
@@ -156,6 +156,11 @@ void goToSleep(DateTime sleepy){
     }else {
         Serial.println("Alarm will happen in 10 seconds!");  
     }
+    char date[] = "DD.MM.YYYY, ";
+    Serial.print(sleepy.toString(date));
+    char time[] = "hh:mm:ss";
+    sleepy.toString(time);
+    Serial.println(time);
     Serial.println("Going to sleep now");
         Serial.flush();
         esp_deep_sleep_start(); //starts deep sleep
@@ -164,10 +169,11 @@ void goToSleep(DateTime sleepy){
 }
 void seeUNxtYr(){
 primeIndex ++;  //going for next year on list
+DateTime now = rtc.now();
 int p = primeIndex;
-if(p >= 10)break; //over ten years ... hopefully I will still be alive
+if(p >= 10)while(1); //over ten years ... hopefully I will still be alive
 //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
-DateTime future (holiday[p,2],holiday[p, 0], holiday[p, 1],19, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
-if(rtc.year() +1 != holiday[p,2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
-goToSleep(future); //send future to sleep function...
+DateTime future (holiday[p][2],holiday[p][0], holiday[p][1],19, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
+if(now.year() +1 != holiday[p][2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
+goToSleepDate(future); //send future to sleep function...
 }
