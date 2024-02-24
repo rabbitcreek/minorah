@@ -10,7 +10,11 @@ RTC_DATA_ATTR int primeDay = 0;
 {11,27,2032},{12,16,2033}};
 #include <Adafruit_AW9523.h>
 Adafruit_AW9523 aw;
-volatile bool bingo = false;
+int curStrength = 120;
+// Maximum amplitude of flickering
+int maxAmp = 100;
+// Milliseconds per frame
+int frameLength = 10;
 void setup() {
     Serial.begin(9600);
      if (! aw.begin(0x58)) {
@@ -117,7 +121,7 @@ void startHoliday(){
   delay(candleHold);  //delay in between candles
   }
    while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
-    int xo = xo + 1; 
+    flicker();
    }
    for ( int x = primeDay; x >= 0; x--){ //primeDay is number of days of the 8 in sequence ...this turns candles off
    for (int i = 0; i < 270; i++){                          // 360 degrees of an imaginary circle.
@@ -176,4 +180,60 @@ if(p >= 10)while(1); //over ten years ... hopefully I will still be alive
 DateTime future (holiday[p][2],holiday[p][0], holiday[p][1],19, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
 if(now.year() +1 != holiday[p][2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
 goToSleepDate(future); //send future to sleep function...
+}
+void flicker() {
+    // Amplitude of flickering
+    int amp = random(maxAmp)+1;
+    
+    // Length of flickering in milliseconds
+    int length = random(10000/amp)+1000;
+    
+    // Strength to go toward
+    int endStrength = random(255-(amp/4))+(amp/4);
+    
+    // Flicker function
+    flickerSection(length, amp, endStrength);
+}
+
+void flickerSection(int length, int amp, int endStrength) {
+    // Initilize variables
+    int i, max, min;
+    double oldStrengthRatio, endStrengthRatio;
+    
+    // Number of frames to loop through
+    int frameNum = length/frameLength;
+    
+    // Use variable to hold the old LED strength
+    int oldStrength = curStrength;
+    
+    
+    // Loop <frameNum> times 
+    for(i = 0; i <= frameNum; i += 1){
+        // The ratio of the old/end strengths should be proprtional to the ratio of total frames/current frames
+        // Use type casting to allow decimals
+        oldStrengthRatio = (1-(double)i/(double)frameNum);
+        endStrengthRatio = ((double)i/(double)frameNum);
+        
+        // Fade current LED strength from the old value to the end value
+        curStrength = (oldStrength*oldStrengthRatio) + (endStrength*endStrengthRatio);
+        
+        // LED brightnesses must be in between max and min values
+        // Both values are half an amplitude's distance from the average
+        max = curStrength+(amp/2);
+        min = curStrength-(amp/2);
+        
+        // Light LEDs to random brightnesses
+        for(int LedPin = 0; LedPin < primeDay; LedPin ++){
+        setRandom(LedPin, max, min);
+    }
+        
+        
+        // Wait until next frame
+        delay(frameLength);
+    }
+}
+
+void setRandom(int led, int max, int min) {
+    // Set chosen LED to a random brightness between the maximum and minimum values
+    aw.analogWrite(led, random(max - min) + min);
 }
