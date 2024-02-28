@@ -6,7 +6,7 @@ RTC_DS3231 rtc;
 
 RTC_DATA_ATTR int primeIndex = 0;
 RTC_DATA_ATTR int primeDay = 0;
- int holiday[11][3] = {{12,12,2023},{2,23,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
+ int holiday[11][3] = {{12,12,2023},{2,28,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
 {11,27,2032},{12,16,2033}};
 #include <Adafruit_AW9523.h>
 Adafruit_AW9523 aw;
@@ -135,7 +135,7 @@ void startHoliday(){
 }
 primeDay ++; //added another day to festivities
 if(primeDay == 9) seeUNxtYr(); //if over 8 days schedule next year
-DateTime celebrate = rtc.now() + TimeSpan(0,0,5,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
+DateTime celebrate = rtc.now() + TimeSpan(0,0,1,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
 goToSleepDate(celebrate); //goes to sleep with wakup on correct date/hour/min/seconds match
 
 
@@ -223,7 +223,7 @@ void flickerSection(int length, int amp, int endStrength) {
         min = curStrength-(amp/2);
         
         // Light LEDs to random brightnesses
-        for(int LedPin = 0; LedPin < primeDay; LedPin ++){
+        for(int LedPin = 0; LedPin < primeDay +1; LedPin ++){
         setRandom(LedPin, max, min);
     }
         
