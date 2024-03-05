@@ -47,7 +47,8 @@ void setup() {
     pinMode(GPIO_NUM_4, INPUT_PULLUP);
     pinMode(GPIO_NUM_2, OUTPUT);
     digitalWrite(GPIO_NUM_2, LOW);
-    gpio_hold_en(GPIO_NUM_4);4, 0); //1 = High, 0 = Low
+    gpio_hold_en(GPIO_NUM_4);
+    esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0); //1 = High, 0 = Low
     //attachInterrupt(digitalPinToInterrupt(GPIO_NUM_4), onAlarm, FALLING);
      if(rtc.alarmFired(1)) {
             Serial.println("Alarm occured, current time: ");
