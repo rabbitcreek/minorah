@@ -16,7 +16,7 @@ int maxAmp = 100;
 // Milliseconds per frame
 int frameLength = 10;
 void setup() {
-    Serial.begin(9600);
+    //Serial.begin(9600);
      if (! aw.begin(0x58)) {
     Serial.println("AW9523 not found? Check wiring!");
     while (1) delay(10);  // halt forever
@@ -180,7 +180,7 @@ void goToSleepDate(DateTime sleepy){
     sleepy.toString(time);
     Serial.println(time);
     Serial.println("Going to sleep now");
-        Serial.flush();
+        //Serial.flush();
         esp_deep_sleep_start(); //starts deep sleep
         Serial.println("This will never be printed");
 
