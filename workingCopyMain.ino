@@ -6,7 +6,7 @@ RTC_DS3231 rtc;
 
 RTC_DATA_ATTR int primeIndex = 0;
 RTC_DATA_ATTR int primeDay = 0;
- int holiday[11][3] = {{12,12,2023},{2,28,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
+ int holiday[11][3] = {{12,12,2023},{3,4,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
 {11,27,2032},{12,16,2033}};
 #include <Adafruit_AW9523.h>
 Adafruit_AW9523 aw;
@@ -22,11 +22,17 @@ void setup() {
     while (1) delay(10);  // halt forever
   }
   Serial.println("AW9523 found!");
-  for(int zip = 0; zip<11; zip++){
+ aw.pinMode(10,OUTPUT);
+ aw.pinMode(14,OUTPUT);
+ aw.digitalWrite(14,HIGH);
+  for(int zip = 0; zip< 10; zip++){
     aw.pinMode(zip, AW9523_LED_MODE);
     aw.analogWrite(zip, 0);
   }
-  
+ 
+ 
+
+ 
 
     if(!rtc.begin()) {
         Serial.println("Couldn't find RTC!");
@@ -39,8 +45,9 @@ void setup() {
     
     // Making it so, that the alarm will trigger an interrupt
     pinMode(GPIO_NUM_4, INPUT_PULLUP);
-    gpio_hold_en(GPIO_NUM_4);
-    esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0); //1 = High, 0 = Low
+    pinMode(GPIO_NUM_2, OUTPUT);
+    digitalWrite(GPIO_NUM_2, LOW);
+    gpio_hold_en(GPIO_NUM_4);4, 0); //1 = High, 0 = Low
     //attachInterrupt(digitalPinToInterrupt(GPIO_NUM_4), onAlarm, FALLING);
      if(rtc.alarmFired(1)) {
             Serial.println("Alarm occured, current time: ");
@@ -58,9 +65,10 @@ if(primeIndex != 0 && primeDay != 0 )startHoliday();
 //    }
     
    
-    
+  
   
 }
+
 void loop() {
   
   
@@ -110,7 +118,11 @@ void startHoliday(){
   int candleHold = 5000;    // delay in between lighting next candle
   int candleTimer = 1 * 1000 * 60;   //ten minutes that candles will be on
   double timeTracker = millis();  //this is baseline timing for when candles will be lit
-  for ( int x = 0; x <= primeDay; x++){   //this  segment turns candles on
+  
+  thePrayer();
+  aw.analogWrite(9, 255);
+  aw.analogWrite(0,0);
+  for ( int x = 1; x <= primeDay; x++){   //this  segment turns candles on
     for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
     
     float angle = radians(i);                             // Converts degrees to radians.
@@ -160,6 +172,7 @@ void goToSleepDate(DateTime sleepy){
     }else {
         Serial.println("Alarm will happen in 10 seconds!");  
     }
+    aw.analogWrite(9, 0);
     char date[] = "DD.MM.YYYY, ";
     Serial.print(sleepy.toString(date));
     char time[] = "hh:mm:ss";
@@ -174,6 +187,7 @@ void goToSleepDate(DateTime sleepy){
 void seeUNxtYr(){
 primeIndex ++;  //going for next year on list
 DateTime now = rtc.now();
+aw.analogWrite(9, 0);
 int p = primeIndex;
 if(p >= 10)while(1); //over ten years ... hopefully I will still be alive
 //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
@@ -223,7 +237,7 @@ void flickerSection(int length, int amp, int endStrength) {
         min = curStrength-(amp/2);
         
         // Light LEDs to random brightnesses
-        for(int LedPin = 0; LedPin < primeDay +1; LedPin ++){
+        for(int LedPin = 1; LedPin < primeDay +1; LedPin ++){
         setRandom(LedPin, max, min);
     }
         
@@ -236,4 +250,10 @@ void flickerSection(int length, int amp, int endStrength) {
 void setRandom(int led, int max, int min) {
     // Set chosen LED to a random brightness between the maximum and minimum values
     aw.analogWrite(led, random(max - min) + min);
+}
+void thePrayer(){
+  digitalWrite(GPIO_NUM_2, HIGH);
+  delay(17200);
+  digitalWrite(GPIO_NUM_2, LOW);
+  delay(5000);
 }
