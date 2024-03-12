@@ -6,7 +6,7 @@ RTC_DS3231 rtc;
 
 RTC_DATA_ATTR int primeIndex = 0;
 RTC_DATA_ATTR int primeDay = 0;
- int holiday[11][3] = {{12,12,2023},{3,4,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
+ int holiday[11][3] = {{12,12,2023},{3,11,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
 {11,27,2032},{12,16,2033}};
 #include <Adafruit_AW9523.h>
 Adafruit_AW9523 aw;
@@ -15,6 +15,7 @@ int curStrength = 120;
 int maxAmp = 100;
 // Milliseconds per frame
 int frameLength = 10;
+int fakePrime = 0;
 void setup() {
     //Serial.begin(9600);
      if (! aw.begin(0x58)) {
@@ -57,7 +58,11 @@ void setup() {
             Serial.println("Alarm 1 cleared");
         }
 //pinMode(GPIO_NUM_4, INPUT_PULLUP);
-if(primeIndex == 0)firstDater();
+if(primeIndex == 0){
+  onPower();
+  firstDater();
+  fakePrime = primeDay;
+}
 if(primeIndex != 0 && primeDay != 0 )startHoliday();
 
 //    if(rtc.lostPower()) {
@@ -118,9 +123,8 @@ else Serial.println(" cannot find primeDay ");
 void startHoliday(){
   int candleHold = 5000;    // delay in between lighting next candle
   int candleTimer = 1 * 1000 * 60;   //ten minutes that candles will be on
-  double timeTracker = millis();  //this is baseline timing for when candles will be lit
   
-  thePrayer();
+  
   aw.analogWrite(9, 255);
   aw.analogWrite(0,0);
   for ( int x = 1; x <= primeDay; x++){   //this  segment turns candles on
@@ -133,6 +137,9 @@ void startHoliday(){
   }
   delay(candleHold);  //delay in between candles
   }
+  thePrayer();
+  double timeTracker = millis();  //this is baseline timing for when candles will be lit
+
    while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
     flicker();
    }
@@ -238,7 +245,7 @@ void flickerSection(int length, int amp, int endStrength) {
         min = curStrength-(amp/2);
         
         // Light LEDs to random brightnesses
-        for(int LedPin = 1; LedPin < primeDay +1; LedPin ++){
+        for(int LedPin = 0; LedPin < fakePrime +1; LedPin ++){
         setRandom(LedPin, max, min);
     }
         
@@ -257,4 +264,36 @@ void thePrayer(){
   delay(17200);
   digitalWrite(GPIO_NUM_2, LOW);
   delay(5000);
+}
+void onPower(){
+  int candleHold = 500;    // delay in between lighting next candle
+  int candleTimer = 0.5 * 1000 * 60;   //ten minutes that candles will be on
+   fakePrime = 8;
+  thePrayer();
+  aw.analogWrite(9, 255);
+  aw.analogWrite(0,0);
+  for ( int x = 0; x <= 8; x++){   //this  segment turns candles on
+    for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
+    
+    float angle = radians(i);                             // Converts degrees to radians.
+     int brightness = (255 / 2) + (255 / 2) * sin(angle);      // Generates points on a sign wave.
+    aw.analogWrite(x,brightness);                          // Sends sine wave information to pin 9.
+    delay(10);                                            // Delay between each point of sine wave.
+  }
+  delay(candleHold);  //delay in between candles
+  }
+  double timeTracker = millis(); //this is baseline timing for when candles will be lit
+   while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
+    flicker();
+   }
+   for ( int x = 8; x >= 0; x--){ //primeDay is number of days of the 8 in sequence ...this turns candles off
+   for (int i = 0; i < 270; i++){                          // 360 degrees of an imaginary circle.
+    
+    float angle = radians(i);                             // Converts degrees to radians.
+     int brightness = (255 / 2) + (255 / 2) * sin(angle);      // Generates points on a sign wave.
+    aw.analogWrite(x,brightness);                          // Sends sine wave information to pin 9.
+    delay(10);                           
+   }
+  
+}
 }
