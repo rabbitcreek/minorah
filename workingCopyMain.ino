@@ -6,8 +6,9 @@ RTC_DS3231 rtc;
 
 RTC_DATA_ATTR int primeIndex = 0;
 RTC_DATA_ATTR int primeDay = 0;
- int holiday[11][3] = {{12,12,2023},{3,11,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
+ int holiday[11][3] = {{12,12,2023},{3,12,2024},{12,14,2025},{12,4,2026},{12,24,2027},{12,12,2028},{12,1,2029},{12,20,2030},{12,9,2031},
 {11,27,2032},{12,16,2033}};
+int ranFile[9] = {0,0,0,0,0,0,0,0,0};
 #include <Adafruit_AW9523.h>
 Adafruit_AW9523 aw;
 int curStrength = 120;
@@ -114,11 +115,12 @@ for (int i = 0; i < 11; i++){ //goes through holiday index of years looking for 
  if(primeIndex = 0) Serial.println( "cannot find primeIndex");//if primeIndex is still zero after search something is wrong
 }
 if(cal.day() == holiday[primeIndex][1] && cal.month() == holiday[primeIndex ][0])primeDay = 1;
-else Serial.println(" cannot find primeDay ");
+else {Serial.println(" cannot find primeDay ");
+seeUNxtYr();
 }
 
   
-
+}
 
 void startHoliday(){
   int candleHold = 5000;    // delay in between lighting next candle
@@ -155,7 +157,10 @@ void startHoliday(){
   
 }
 primeDay ++; //added another day to festivities
-if(primeDay == 9) seeUNxtYr(); //if over 8 days schedule next year
+if(primeDay == 9) {
+  primeIndex ++;  //going for next year on list
+  seeUNxtYr();
+} //if over 8 days schedule next year
 DateTime celebrate = rtc.now() + TimeSpan(0,0,1,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
 goToSleepDate(celebrate); //goes to sleep with wakup on correct date/hour/min/seconds match
 
@@ -194,14 +199,14 @@ void goToSleepDate(DateTime sleepy){
 
 }
 void seeUNxtYr(){
-primeIndex ++;  //going for next year on list
+
 DateTime now = rtc.now();
 aw.analogWrite(9, 0);
 int p = primeIndex;
 if(p >= 10)while(1); //over ten years ... hopefully I will still be alive
 //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
 DateTime future (holiday[p][2],holiday[p][0], holiday[p][1],19, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
-if(now.year() +1 != holiday[p][2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
+//if(now.year() +1 != holiday[p][2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
 goToSleepDate(future); //send future to sleep function...
 }
 void flicker() {
@@ -288,14 +293,25 @@ void onPower(){
    while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
     flicker();
    }
+   randomizer(8);
    for ( int x = 8; x >= 0; x--){ //primeDay is number of days of the 8 in sequence ...this turns candles off
    for (int i = 0; i < 270; i++){                          // 360 degrees of an imaginary circle.
     
     float angle = radians(i);                             // Converts degrees to radians.
      int brightness = (255 / 2) + (255 / 2) * sin(angle);      // Generates points on a sign wave.
-    aw.analogWrite(x,brightness);                          // Sends sine wave information to pin 9.
+    aw.analogWrite(ranFile[x],brightness);                          // Sends sine wave information to pin 9.
     delay(10);                           
    }
   
 }
+}
+void randomizer( int   howMany){
+  for(int i = 0; i <= howMany; i ++){
+  ranFile[i] = i;}
+  for(int i = 0; i <= howMany; i ++){
+    int n = random(0, howMany);
+    int temp = ranFile[n];
+    ranFile[n] = ranFile[i];
+    ranFile[i] = temp;
+  }
 }
