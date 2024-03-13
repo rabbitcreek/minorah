@@ -60,9 +60,9 @@ void setup() {
 //pinMode(GPIO_NUM_4, INPUT_PULLUP);
 if(primeIndex == 0){
   onPower();
-  firstDater();
-  fakePrime = primeDay;
+  firstDater(); 
 }
+fakePrime = primeDay;
 if(primeIndex != 0 && primeDay != 0 )startHoliday();
 
 //    if(rtc.lostPower()) {
@@ -127,6 +127,7 @@ void startHoliday(){
   
   aw.analogWrite(9, 255);
   aw.analogWrite(0,0);
+  thePrayer();
   for ( int x = 1; x <= primeDay; x++){   //this  segment turns candles on
     for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
     
@@ -137,7 +138,7 @@ void startHoliday(){
   }
   delay(candleHold);  //delay in between candles
   }
-  thePrayer();
+  
   double timeTracker = millis();  //this is baseline timing for when candles will be lit
 
    while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
@@ -269,9 +270,10 @@ void onPower(){
   int candleHold = 500;    // delay in between lighting next candle
   int candleTimer = 0.5 * 1000 * 60;   //ten minutes that candles will be on
    fakePrime = 8;
-  thePrayer();
+  
   aw.analogWrite(9, 255);
   aw.analogWrite(0,0);
+  thePrayer();
   for ( int x = 0; x <= 8; x++){   //this  segment turns candles on
     for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
     
