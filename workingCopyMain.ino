@@ -146,12 +146,13 @@ void startHoliday(){
    while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
     flicker();
    }
+   randomizer(primeDay);
    for ( int x = primeDay; x >= 0; x--){ //primeDay is number of days of the 8 in sequence ...this turns candles off
    for (int i = 0; i < 270; i++){                          // 360 degrees of an imaginary circle.
     
     float angle = radians(i);                             // Converts degrees to radians.
      int brightness = (255 / 2) + (255 / 2) * sin(angle);      // Generates points on a sign wave.
-    aw.analogWrite(x,brightness);                          // Sends sine wave information to pin 9.
+    aw.analogWrite(ranFile[x],brightness);                          // Sends sine wave information to pin 9.
     delay(30);                           
    }
   
