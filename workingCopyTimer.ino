@@ -6,7 +6,7 @@ RTC_DS3231 rtc;
 bool alarmCheck = 0;
 RTC_DATA_ATTR int primeIndex = 0;//primeIndex is the array index in holiday that holds the current year
 RTC_DATA_ATTR int primeDay = 0;//primeDay is the current day in the eight day holiday series 
- double holiday[11][4] = {{12,12,2023,1702443600},{3,16,2024,1710641272},{12,14,2025,1765774800},{12,4,2026,1796446800},{12,24,2027,1829710800},{12,12,2028,1860296400},{12,1,2029,1890882000},{12,20,2030,1924059600},{12,9,2031,1954645200},
+ double holiday[11][4] = {{12,12,2023,1702443600},{3,17,2024,1710698400},{12,14,2025,1765774800},{12,4,2026,1796446800},{12,24,2027,1829710800},{12,12,2028,1860296400},{12,1,2029,1890882000},{12,20,2030,1924059600},{12,9,2031,1954645200},
 {11,27,2032,1985230800},{12,16,2033,2018408400}};//array of dates for next 11 years of hanukah
 int ranFile[9] = {0,0,0,0,0,0,0,0,0}; //zeros out random array ranFile which is an array that randomises off time for candles
 #include <Adafruit_AW9523.h>
@@ -39,7 +39,8 @@ void setup() {
         //Serial.flush();
         abort();
     }
-    rtc.adjust(DateTime(2024, 3, 19, 19, 0, 0));
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    //rtc.adjust(DateTime(2024, 3, 19, 19, 0, 0));
     if(rtc.lostPower()) {
         // this will adjust to the date and time at compilation
         rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -62,18 +63,22 @@ void setup() {
             rtc.clearAlarm(1);
             Serial.println("Alarm 1 cleared");
         }
-//pinMode(GPIO_NUM_4, INPUT_PULLUP);
-if(primeIndex == 0){
-  //onPower();
-  firstDater(); 
-}
-
+    //onPower(); 
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
 Serial.print("PrimeIndex = ");
 Serial.println(primeIndex);
-fakePrime = primeDay;
-if(primeIndex != 0 && primeDay != 0 )startHoliday();
+    
+
+if(primeDay  == 0 || primeIndex == 0 ) firstDater();
+fakePrime = primeDay;   
+if(primeIndex != 0 && primeDay != 0 )startHoliday();       
+
+  
+
+
+
+
 
     
     
@@ -133,7 +138,7 @@ Serial.print("Unix time = ");
 Serial.println(unix_time);
 Serial.print("primeDay calculated =");
 Serial.print(surprise);
-//seeUNxtYr();
+seeUNxtYr();
 }
 
   
@@ -223,7 +228,7 @@ aw.analogWrite(9, 0);
 int p = primeIndex;
 if(p >= 10)while(1); //over ten years ... hopefully I will still be alive
 //DateTime alarmTime (2021, 2, 17, 18, 59, 0);
-DateTime future (holiday[p][2],holiday[p][0], holiday[p][1],19, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
+DateTime future (holiday[p][2],holiday[p][0], holiday[p][1],8, 0,0); //sets up alarm for the next set of numbers contained in array holiday...
 //if(now.year() +1 != holiday[p][2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
 goToSleepDate(future); //send future to sleep function...
 }
