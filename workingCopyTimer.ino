@@ -4,7 +4,7 @@ RTC_DS3231 rtc;
 bool alarmCheck = 0;
 RTC_DATA_ATTR int primeIndex = 0;//primeIndex is the array index in holiday that holds the current year
 RTC_DATA_ATTR int primeDay = 0;//primeDay is the current day in the eight day holiday series 
- double holiday[14][4] = {{12,12,2023,1702443600},{3,18,2024,1710824400},{12,14,2025,1765774800},{12,4,2026,1796446800},{12,24,2027,1829710800},{12,12,2028,1860296400},{12,1,2029,1890882000},{12,20,2030,1924059600},{12,9,2031,1954645200},
+ uint32_t holiday[14][4] = {{12,12,2023,1702443600},{3,18,2024,1710824400},{12,14,2025,1765774800},{12,4,2026,1796446800},{12,24,2027,1829710800},{12,12,2028,1860296400},{12,1,2029,1890882000},{12,20,2030,1924059600},{12,9,2031,1954645200},
 {11,27,2032,1985230800},{12,16,2033,2018408400},{12,6,2034,2049080400},{12,25,2035,2082258000},{12,13,2036,2112843600}};//array of dates for next 14 years of hanukah
 int ranFile[9] = {0,0,0,0,0,0,0,0,0}; //zeros out random array ranFile which is an array that randomises off time for candles
 #include <Adafruit_AW9523.h>
@@ -56,7 +56,7 @@ void setup() {
             rtc.clearAlarm(1);
             Serial.println("Alarm 1 cleared");
         }
-    //onPower(); 
+    onPower(); 
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
 Serial.print("PrimeIndex = ");
@@ -103,8 +103,10 @@ void print_wakeup_reason()
   }
 }
 void firstDater(){ //this function finds the index in holiday for matching year if primeIndex is 0...like the first time
+Serial.print(" im here");
 DateTime cal = rtc.now();
 uint32_t unix_time = rtc.now().unixtime();
+unix_time = unix_time + 36000;
 for (int i = 0; i < 15; i++){ //goes through holiday index of years looking for this year...last year included so primeIndex will not equal 0..
  if(  holiday[i][2] == cal.year()){ //checks to  see if its this year..
   primeIndex = i;//sets primeIndex to current year data
@@ -116,7 +118,7 @@ for (int i = 0; i < 15; i++){ //goes through holiday index of years looking for 
 if(cal.day() == holiday[primeIndex][1] && cal.month() == holiday[primeIndex ][0])primeDay = 1; 
  else if(((holiday[primeIndex][3] + (86400 * 8)) > unix_time) && unix_time >= holiday[primeIndex][3]) {
 primeDay = ((unix_time - holiday[primeIndex][3]) / 86400 ) + 1;
-
+ 
 }
 else {Serial.println(" cannot find primeDay ");
 int surprise = ((unix_time - holiday[primeIndex][3]) / 86400 ) + 1;
