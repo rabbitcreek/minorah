@@ -32,7 +32,7 @@ void setup() {
         //Serial.flush();
         abort();
     }
-    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));  //opened this will synch RTC with computer
     //rtc.adjust(DateTime(2024, 3, 19, 19, 0, 0));
     if(rtc.lostPower()) {
         // this will adjust to the date and time at compilation
@@ -44,9 +44,9 @@ void setup() {
     printTime();
     // Making it so, that the alarm will trigger an interrupt
     pinMode(GPIO_NUM_4, INPUT_PULLUP);
-    pinMode(GPIO_NUM_2, OUTPUT);
+    pinMode(GPIO_NUM_2, OUTPUT);//this is the GPIO connected to the transistor that turns on MP3 player
     digitalWrite(GPIO_NUM_2, LOW);
-    gpio_hold_en(GPIO_NUM_4);
+    gpio_hold_en(GPIO_NUM_4);  //GPIO that wakes up ESP from RTC
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0); //1 = High, 0 = Low
     //attachInterrupt(digitalPinToInterrupt(GPIO_NUM_4), onAlarm, FALLING);
      if(rtc.alarmFired(1)) {
@@ -56,28 +56,28 @@ void setup() {
             rtc.clearAlarm(1);
             Serial.println("Alarm 1 cleared");
         }
-    onPower(); 
+    onPower(); //function that demos the lights and song
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
 Serial.print("PrimeIndex = ");
 Serial.println(primeIndex);
     
 
-if(primeDay  == 0 || primeIndex == 0 ) firstDater();
+if(primeDay  == 0 || primeIndex == 0 ) firstDater();  //power went out ... didnt wake from sleep need to set what day and what year
 fakePrime = primeDay; 
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
 Serial.print("PrimeIndex = ");
 Serial.println(primeIndex);
      
-if(primeIndex != 0 && primeDay != 0 )startHoliday();         
+if(primeIndex != 0 && primeDay != 0 )startHoliday();      //found day and year to start the show...   
 }
 
-void loop() {
+void loop() { //loop function never used
   
   
 }
-void printTime(){
+void printTime(){//call this to print the current time on RTC
      
     DateTime now = rtc.now();
     char date[] = "DD.MM.YYYY, ";
@@ -87,7 +87,7 @@ void printTime(){
     Serial.println(time);
 }
 
-void print_wakeup_reason()
+void print_wakeup_reason()//the usual function that tells what woke esp32 up
 {
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
@@ -114,17 +114,12 @@ for (int i = 0; i < 15; i++){ //goes through holiday index of years looking for 
  if(primeIndex = 0) Serial.println( "cannot find primeIndex");//if primeIndex is still zero after search something is wrong
 }
 
-if(cal.day() == holiday[primeIndex][1] && cal.month() == holiday[primeIndex ][0])primeDay = 1; 
- else if(((holiday[primeIndex][3] + (86400 * 8)) > unix_time) && unix_time >= holiday[primeIndex][3]) {
+if(cal.day() == holiday[primeIndex][1] && cal.month() == holiday[primeIndex ][0])primeDay = 1; //checks to see if date match is correct
+ else if(((holiday[primeIndex][3] + (86400 * 7)) > unix_time) && unix_time >= holiday[primeIndex][3]) {  //if not perfect date is it withing 7 days of start
 primeDay = ((unix_time - holiday[primeIndex][3]) / 86400 ) + 1;
  
 }
-else {Serial.println(" cannot find primeDay ");
-int surprise = ((unix_time - holiday[primeIndex][3]) / 86400 ) + 1;
-Serial.print("Unix time = ");
-Serial.println(unix_time);
-Serial.print("primeDay calculated =");
-Serial.print(surprise);
+else {Serial.println(" cannot find primeDay ");// if its not the day and not within 7 days of it  try next month ... date doesnt know month...
 seeUNxtYr();
 }
 
@@ -137,9 +132,9 @@ void startHoliday(){
   int candleTimer = 10 * 1000 * 60;   //ten minutes that candles will be on
   
   
-  aw.analogWrite(9, 255);
+  aw.analogWrite(9, 255); //this is the red part of the chamas
   aw.analogWrite(0,0);
-  thePrayer();
+  thePrayer();  //cue Jack Black
   for ( int x = 1; x <= primeDay; x++){   //this  segment turns candles on
     for (int i = 270; i > 0; i--){                          // 360 degrees of an imaginary circle.
     
@@ -156,7 +151,7 @@ void startHoliday(){
    while ( millis() - timeTracker <= candleTimer){   // delay between candles on and off 
     flicker();
    }
-   randomizer(primeDay);
+   randomizer(primeDay);//this randomizes the array with a card shuffle
    for ( int x = primeDay; x >= 0; x--){ //primeDay is number of days of the 8 in sequence ...this turns candles off
    for (int i = 0; i < 270; i++){                          // 360 degrees of an imaginary circle.
     
@@ -169,14 +164,14 @@ void startHoliday(){
 }
 
 uint32_t unix_time = rtc.now().unixtime();
-unix_time = unix_time + 36000;
+unix_time = unix_time + 36000;//grabs unix time from rtc
 Serial.print("unix time:");
 Serial.println(unix_time);
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
 Serial.print("PrimeIndex = ");
 Serial.println(primeIndex);
-uint32_t timeLeft = (unix_time - holiday[primeIndex][3])  - ((primeDay -1) * 86400 );
+uint32_t timeLeft = (unix_time - holiday[primeIndex][3])  - ((primeDay -1) * 86400 );  //checks to see how much time has elapsed from 19:00 hours to compensate timing for next light
 Serial.print("Time Left = ");
 Serial.println(timeLeft);
 uint32_t spanner = 86400 - timeLeft;
@@ -224,7 +219,7 @@ void goToSleepDate(DateTime sleepy){
         Serial.println("This will never be printed");
 
 }
-void seeUNxtYr(){
+void seeUNxtYr(){  //looking for next alarm
 
 DateTime now = rtc.now();
 aw.analogWrite(9, 0);
@@ -235,7 +230,7 @@ DateTime future (holiday[p][2],holiday[p][0], holiday[p][1],19, 0,0); //sets up 
 //if(now.year() +1 != holiday[p][2]) Serial.println("Next year schedule is broken"); //if now.year +1 does not correspond to next year something is wrong...
 goToSleepDate(future); //send future to sleep function...
 }
-void flicker() {
+void flicker() {//these functions produce flickering...they are all borrowed...thanx
     // Amplitude of flickering
     int amp = random(maxAmp)+1;
     
@@ -277,7 +272,7 @@ void flickerSection(int length, int amp, int endStrength) {
         min = curStrength-(amp/2);
         
         // Light LEDs to random brightnesses
-        for(int LedPin = 0; LedPin < fakePrime +1; LedPin ++){
+        for(int LedPin = 0; LedPin < fakePrime +1; LedPin ++){   //fakePrime is used by several functions to produce the wiggle light numbers
         setRandom(LedPin, max, min);
     }
         
@@ -291,7 +286,7 @@ void setRandom(int led, int max, int min) {
     // Set chosen LED to a random brightness between the maximum and minimum values
     aw.analogWrite(led, random(max - min) + min);
 }
-void thePrayer(){
+void thePrayer(){//cue Jack Black ...thanx for the prayer...everyone else forgets it...this activates transistor for 17 secs of prayer
   digitalWrite(GPIO_NUM_2, HIGH);
   delay(17200);
   digitalWrite(GPIO_NUM_2, LOW);
@@ -331,7 +326,7 @@ void onPower(){
   
 }
 }
-void randomizer( int   howMany){
+void randomizer( int   howMany){//shuffles array of candles   
   for(int i = 0; i <= howMany; i ++){
   ranFile[i] = i;}
   for(int i = 0; i <= howMany; i ++){
