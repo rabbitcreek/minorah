@@ -103,7 +103,6 @@ void print_wakeup_reason()
   }
 }
 void firstDater(){ //this function finds the index in holiday for matching year if primeIndex is 0...like the first time
-Serial.print(" im here");
 DateTime cal = rtc.now();
 uint32_t unix_time = rtc.now().unixtime();
 unix_time = unix_time + 36000;
@@ -133,6 +132,7 @@ seeUNxtYr();
 }
 
 void startHoliday(){
+  
   int candleHold = 10000;    // delay in between lighting next candle
   int candleTimer = 10 * 1000 * 60;   //ten minutes that candles will be on
   
@@ -167,12 +167,27 @@ void startHoliday(){
    }
   
 }
+
+uint32_t unix_time = rtc.now().unixtime();
+unix_time = unix_time + 36000;
+Serial.print("unix time:");
+Serial.println(unix_time);
+Serial.print("PimeDay = ");
+Serial.println(primeDay);
+Serial.print("PrimeIndex = ");
+Serial.println(primeIndex);
+uint32_t timeLeft = (unix_time - holiday[primeIndex][3])  - ((primeDay -1) * 86400 );
+Serial.print("Time Left = ");
+Serial.println(timeLeft);
+uint32_t spanner = 86400 - timeLeft;
+DateTime celebrate = rtc.now() + TimeSpan(spanner);
 primeDay ++; //added another day to festivities
 if(primeDay == 9) {
   primeIndex ++;  //going for next year on list
   seeUNxtYr();
 } //if over 8 days schedule next year
-DateTime celebrate = rtc.now() + TimeSpan(1,0,0,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
+
+//DateTime celebrate = rtc.now() + TimeSpan(1,0,0,0); //celebrate is dateTime for one day from now timespan function takes (day,hour,minute,sec)
 goToSleepDate(celebrate); //goes to sleep with wakup on correct date/hour/min/seconds match
 
 
