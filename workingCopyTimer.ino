@@ -56,14 +56,17 @@ void setup() {
             rtc.clearAlarm(1);
             Serial.println("Alarm 1 cleared");
         }
-    onPower(); //function that demos the lights and song
+    
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
 Serial.print("PrimeIndex = ");
 Serial.println(primeIndex);
     
 
-if(primeDay  == 0 || primeIndex == 0 ) firstDater();  //power went out ... didnt wake from sleep need to set what day and what year
+if(primeDay  == 0 || primeIndex == 0 ){  //power went out ... didnt wake from sleep need to set what day and what year
+onPower(); //function that demos the lights and song 
+firstDater();
+}
 fakePrime = primeDay; 
 Serial.print("PimeDay = ");
 Serial.println(primeDay);
