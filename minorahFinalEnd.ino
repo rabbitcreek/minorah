@@ -34,7 +34,7 @@ void setup() {
         //Serial.flush();
         abort();
     }
-    //rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));  //opened this will synch RTC with computer
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));  //opened this will synch RTC with computer
     //rtc.adjust(DateTime(2024, 3, 19, 19, 0, 0));
     if(rtc.lostPower()) {
         // this will adjust to the date and time at compilation
@@ -338,4 +338,7 @@ void randomizer( int   howMany){//shuffles array of candles
   for(int i = 0; i <= howMany; i ++){
     int n = random(0, howMany);
     int temp = ranFile[n];
-    ranFile[n] = ranFile[i
+    ranFile[n] = ranFile[i];
+    ranFile[i] = temp;
+  }
+}
